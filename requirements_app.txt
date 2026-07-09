@@ -1,5 +1,4 @@
-# Demo app dependencies (rename to requirements.txt inside the HF Space)
-gradio>=4.0
+# Demo app dependencies
 pandas
 numpy
 pyarrow
