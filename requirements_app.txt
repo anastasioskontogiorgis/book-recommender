@@ -1,0 +1,9 @@
+# Demo app dependencies (rename to requirements.txt inside the HF Space)
+gradio>=4.0
+pandas
+numpy
+pyarrow
+# optional: exact same results without it (NumPy fallback)
+faiss-cpu
+# optional: only needed for LLM-phrased explanations
+anthropic
