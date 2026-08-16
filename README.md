@@ -17,7 +17,7 @@ This repository contains the second iteration (v2) of the project. Building upon
 | **C (v2)** | **MiniLM-L6-v2 (384-d Dense)** | **Title + Description** | **0.292** | **0.045** | **0.032** |
 | — | *Random Baseline Floor* | N/A | 0.020 | 0.002 | 0.000 |
 
-*Evaluated over 500 seeded queries drawn from 12,531 books carrying $\ge 2$ informative subject tags, retrieving top-5 recommendations. The primary metric, `subject-share@5`, measures the proportion of recommendations sharing at least one informative subject with the query book.*
+*Evaluated over 500 seeded queries drawn from 12,531 books carrying at least two informative subject tags, retrieving top-5 recommendations. The primary metric, `subject-share@5`, measures the proportion of recommendations sharing at least one informative subject with the query book.*
 
 ### Comparison Breakdown
 The comparison is arranged so that each change can be attributed separately. By introducing Variant B as an intermediate benchmark, it is possible to isolate the exact source of retrieval gains: (i) Data Enrichment ($A \rightarrow B$), holding the model fixed (TF-IDF) while adding description metadata yields a **17% relative improvement**; (ii) Encoder Upgrade ($B \rightarrow C$), holding the enriched text fixed while upgrading from lexical TF-IDF to dense `all-MiniLM-L6-v2` embeddings yields a further **95% relative improvement**; (iii) Overall Lift, the model architecture upgrade contributes roughly 5× more retrieval quality than data enrichment alone, and Variant C sits 14.6× above the random floor.
