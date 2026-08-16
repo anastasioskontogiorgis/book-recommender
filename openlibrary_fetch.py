@@ -1,21 +1,19 @@
 #!/usr/bin/env python3
 """
-Open Library enrichment for the Book-Crossing recommender (v2 data step).
+Open Library enrichment for the Book-Crossing recommender.
 
-Fetches a description and subject tags for a sample of books, keyed by ISBN,
-via the Open Library API (edition record -> parent work record). Writes one
-JSON object per line (JSONL), so the run is fully RESUMABLE: re-running with
-the same arguments skips ISBNs already present in the output file, and
-increasing --sample later tops up the same deterministic sample.
+Fetches a description and subject tags for a sample of books based on ISBN,
+using the Open Library API (edition record -> parent work record). Writes one
+JSON object per line (JSONL). The run is fully resumable (re-running with
+the same arguments skips ISBNs already present in the output file) and
+increasing --sample continues the same deterministic sample.
 
-Usage (run locally, ideally overnight):
+Usage :
     python openlibrary_fetch.py --books Books.csv --out enriched_books.jsonl \
-        --sample 15000 --sleep 1.0 --email your.email@example.com
+        --sample 15000 --sleep 1.0 --email email@example.com
 
-Requirements: pandas, requests, nltk  (all already used by the notebook).
-Please keep --sleep at 1.0 or higher: Open Library is a nonprofit and asks
-bulk users to be gentle (their monthly data dumps are the alternative for
-truly bulk needs).
+Requirements: pandas, requests, nltk
+
 """
 from __future__ import anotations
 import argparse
@@ -57,8 +55,7 @@ def build_corpus(books_csv: str) -> pd.DataFrame:
 
 
 def get_json(session: requests.Session, url: str, sleep: float, max_retries: int = 4):
-    """GET a JSON resource politely: sleep after every request, back off on
-    rate-limits/server errors, treat 404 as 'not found'."""
+    """GET a JSON resource sleep after every request, treats 404 as 'not found'."""
     for attempt in range(max_retries):
         try:
             r = session.get(url, timeout=20)
@@ -106,15 +103,15 @@ def main() -> None:
                    help="seconds to wait after each request (keep >= 1.0)")
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--email", required=True,
-                   help="your contact email for the User-Agent header (API etiquette)")
+                   help="contact email for the User-Agent header")
     args = p.parse_args()
 
-    print("Building corpus (cleaning + dedup, same as notebook)...")
+    print("Building corpus, cleaning + deduplication...")
     corpus = build_corpus(args.books)
     print(f"Corpus: {len(corpus)} unique books.")
 
-    # Deterministic, extendable sample: shuffle once with the seed, take the
-    # first N. Increasing --sample later keeps all previously sampled ISBNs.
+    # Deterministic shuffle once using seed then take
+    # first N Increasing '--sample' keeps all previously sampled ISBNs.
     shuffled = corpus.sample(frac=1.0, random_state=args.seed).reset_index(drop=True)
     target = shuffled.head(min(args.sample, len(shuffled)))
 
@@ -132,7 +129,7 @@ def main() -> None:
     todo = target[~target["ISBN"].isin(done)]
     est_h = len(todo) * args.sleep * 1.9 / 3600
     print(f"To fetch: {len(todo)} books  (rough estimate: {est_h:.1f} h at "
-          f"--sleep {args.sleep}; the run is resumable, Ctrl-C is safe).")
+          f"--sleep {args.sleep}; run is resumable, Ctrl-C ).")
 
     session = requests.Session()
     session.headers.update({

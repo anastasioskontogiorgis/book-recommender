@@ -1,16 +1,15 @@
-# app.py — Semantic Book Recommender v2, interactive demo (Gradio)
+ # app.py — Semantic Book Recommender v2, interactive demo (Gradio)
 # ---------------------------------------------------------------------------
 # Design notes
 # ------------
-# * The app consumes two PRECOMPUTED artifacts exported by the v2 notebook:
-#       catalog.parquet   — one row per book (title, author, snippet, subjects)
-#       embeddings.npy    — (N, 384) float32 MiniLM sentence embeddings, L2-normalised
-#   It deliberately does NOT depend on sentence-transformers/torch: all it does at
-#   query time is an inner-product search over unit vectors, which keeps the
-#   Hugging Face Space tiny and fast to cold-start.
-# * Retrieval: FAISS IndexFlatIP when available (the scale-ready idiom), plain
-#   NumPy matrix product otherwise — identical results either way at this size.
-# * Explanations: a deterministic template built from the informative subject
+# > The app consumes two precomputed artifacts exported by the v2 notebook:
+#       catalog.parquet: one row per book (title, author, snippet, subjects)
+#       embeddings.npy:  (N, 384) float32 MiniLM sentence embeddings, L2-normalised
+#   It does not depend on sentence-transformers/torch at query time, it is an inner-product 
+#   search over unit vectors built for efficiency.
+# > Retrieval: FAISS IndexFlatIP when available, plain
+#   NumPy matrix product otherwise, produces identical results.
+# > Explanations: a deterministic template built from the informative subject
 #   tags the two books share. Optionally, if an ANTHROPIC_API_KEY is configured
 #   (e.g. as a Space secret) and the checkbox is ticked, a small LLM phrases a
 #   one-line "why you might like it" from the two descriptions instead. The LLM
@@ -31,7 +30,7 @@ EMB_PATH = "embeddings.npy"
 catalog = pd.read_parquet(CATALOG_PATH)
 emb = np.load(EMB_PATH).astype(np.float32)
 
-# Safety: re-normalise rows so inner product == cosine even if the artifact
+# re-normalise rows so inner product == cosine even if the artifact
 # was produced without normalize_embeddings=True.
 norms = np.linalg.norm(emb, axis=1, keepdims=True)
 norms[norms == 0] = 1.0
@@ -42,7 +41,7 @@ catalog["subject_set"] = catalog["subjects_info"].fillna("").apply(
 )
 
 # ----------------------------- retrieval ----------------------------------
-try:  # FAISS if present; NumPy fallback otherwise (same exact results here)
+try:  # FAISS, else NumPy fallback
     import faiss
 
     _index = faiss.IndexFlatIP(emb.shape[1])
@@ -63,7 +62,7 @@ except ImportError:
 
 
 # ------------------------- dropdown choices --------------------------------
-# Display labels must be unique for Gradio to map a selection back to a row;
+# Display labels must be unique for Gradio to map a selection back to a row
 # duplicate "Title — Author" pairs get an ISBN suffix.
 _labels = (catalog["title"].str.strip() + "  —  " + catalog["author"].str.strip()).tolist()
 _seen: dict[str, int] = {}
@@ -112,7 +111,7 @@ def llm_reason(q: int, r: int) -> str | None:
 # ------------------------- main callback ------------------------------------
 def recommend(choice: str, k: int, use_llm: bool) -> str:
     if not choice:
-        return "Pick a book above (the dropdown is searchable — just start typing)."
+        return "Pick a book above (the dropdown is searchable)."
     q = LABEL_TO_IDX[choice]
     ids, scores = top_k(q, int(k))
 
@@ -134,8 +133,8 @@ with gr.Blocks(title="Semantic Book Recommender v2") as demo:
     gr.Markdown(
         "# Semantic Book Recommender v2\n"
         "15,000 Book-Crossing titles enriched with Open Library descriptions, "
-        "embedded with `all-MiniLM-L6-v2`, retrieved by exact cosine search. "
-        "Companion demo to the analysis notebook — pick a book, get its five "
+        "embedded with `all-MiniLM-L6-v2` and retrieved by exact cosine search. "
+        "Companion demo to the analysis notebook, pick a book, get its five "
         "nearest neighbours in semantic space."
     )
     with gr.Row():

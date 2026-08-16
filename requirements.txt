@@ -1,8 +1,17 @@
-# Demo app dependencies
 pandas
 numpy
 pyarrow
-# optional: exact same results without it (NumPy fallback)
+scikit-learn
+sentence-transformers
+umap-learn
+matplotlib
+ipykernel
+# enrichment script (openlibrary_fetch.py)
+requests
+nltk
+# Demo app dependencies
+gradio>=4.0
+# optional: NumPy fallback
 faiss-cpu
 # optional: only needed for LLM-phrased explanations
 anthropic
